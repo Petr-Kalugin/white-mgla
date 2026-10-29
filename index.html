@@ -30,7 +30,7 @@ th{background:#182338;color:#cfe0ff}
 .kpi div{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px}
 .kpi b{display:block;font-size:18px;color:#fff;word-break:break-word}
 .note{background:#102033;border-left:4px solid var(--warn);padding:10px 12px;border-radius:8px;margin:12px 0;font-size:14px}
-.good{color:var(--good)} .warn{color:var(--warn)}
+.good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 .chk{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px}
 .chk input{width:22px;height:22px;min-height:0}
 .chk label{margin:0;font-size:15px;color:var(--txt)}
@@ -75,9 +75,10 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <h2 style="margin-top:0">Допущения расчёта</h2>
 <ul>
 <li><b>Свой рейд — один</b>, 10/10/80, вместимость 140 000: 14 000 пехоты / 14 000 копий / 112 000 лучников.</li>
+<li><b>Режим «слабые герои»:</b> свой рейд — 5 000 / 5 000 / 5 000 (15 000 всего), остальные войска уходят в присоединения.</li>
 <li><b>Парные запуски:</b> каждые 30 сек стартуют 2 рейда.</li>
 <li><b>Отряды вступления:</b> 1 — Джесси, 2 — Джассер, 3 — Се-Юн; Джеронимо и Фили — опционально.</li>
-<li><b>Лучники:</b> отряды 1–2 — полные 7.5/7.5/85; отряды 3–4 — остаток равномерно; отряд 5 — только пехота и копья.</li>
+<li><b>Лучники:</b> отряды 1–4 — максимум лучников (до 85% лимита), остаток до 100k добивается копьями и пехотой; отряд 5 — только пехота и копья.</li>
 <li><b>Тайминг:</b> сбор 5 мин, поход 15с, возврат 10с, путь 10с → цикл ≈ 5:35.</li>
 <li><b>Последний старт</b> — за 6 мин до конца.</li>
 </ul>
@@ -91,6 +92,7 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <div><label>Лучники</label><input id="mar" type="number" value="292000" step="1000" inputmode="numeric"></div>
 <div><label>Вместимость своего марша</label><input id="cap" type="number" value="140000" step="1000" inputmode="numeric"></div>
 <div><label>Лимит присоединения</label><input id="jcap" type="number" value="100000" step="1000" inputmode="numeric"></div>
+<div class="chk"><input id="weakHeroes" type="checkbox"><label for="weakHeroes">Слабые герои — набиваю больше во вступлении (свой рейд 5k/5k/5k)</label></div>
 <div class="chk"><input id="hasJer" type="checkbox" checked><label for="hasJer">Есть Джеронимо</label></div>
 <div class="chk"><input id="hasFili" type="checkbox" checked><label for="hasFili">Есть Фили</label></div>
 </div>
@@ -127,7 +129,7 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <div id="outStart"></div>
 </div>
 
-<footer>Черновик v1 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
+<footer>Черновик v1.3 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -135,23 +137,42 @@ const fmt=n=>Math.round(n).toLocaleString('ru-RU');
 function calc(){
  const inf=+$('inf').value||0,lan=+$('lan').value||0,mar=+$('mar').value||0,
  cap=+$('cap').value||0,jcap=+$('jcap').value||0,
+ weak=$('weakHeroes').checked,
  hasJer=$('hasJer').checked,hasFili=$('hasFili').checked;
- let r={inf,lan,mar},rows=[],score=0;
+ let r={inf,lan,mar},rows=[],score=0,warnings=[];
  const w={inf:.35,lan:.6,mar:1};
- const take=(t,need)=>{const g=Math.min(need,r[t]);r[t]-=g;score+=g*w[t];return g;};
- const a=take('inf',cap*.1),b=take('lan',cap*.1),c=take('mar',cap*.8);
- rows.push({n:'Свой рейд (10/10/80)',inf:a,lan:b,mar:c,total:a+b+c});
- for(let i=0;i<2;i++){
-  const ai=take('inf',jcap*.075),al=take('lan',jcap*.075),am=take('mar',jcap*.85);
-  rows.push({n:(i+1)+'. '+['Джесси','Джассер'][i]+' — 7.5k/7.5k/85k',inf:ai,lan:al,mar:am,total:ai+al+am});
+ const take=(t,need)=>{const g=Math.max(0,Math.min(need,r[t]));r[t]-=g;score+=g*w[t];return g;};
+ function fillJoin(maxMar){
+  const am=take('mar',maxMar);
+  const rest=jcap-am;
+  let ai=Math.min(r.inf,rest/2);
+  let al=Math.min(r.lan,rest-ai);
+  const deficit=rest-ai-al;
+  if(deficit>0){
+   const addI=Math.min(r.inf,deficit);ai+=addI;
+   const addL=Math.min(r.lan,deficit-addI);al+=addL;
+  }
+  r.inf-=ai;r.lan-=al;score+=ai*w.inf+al*w.lan+am*w.mar;
+  return {ai,al,am};
  }
- const marPer=r.mar/2;
- for(let i=0;i<2;i++){
-  const am=take('mar',marPer);
-  const ai=take('inf',jcap*.075),al=take('lan',jcap*.075);
-  const name=i===0?'Се-Юн':(hasJer?'Джеронимо':'—');
-  rows.push({n:(i+3)+'. '+name+' — лучники равномерно',inf:ai,lan:al,mar:am,total:ai+al+am});
+ // Свой рейд
+ let a,b,c;
+ if(weak){
+  a=take('inf',5000);b=take('lan',5000);c=take('mar',5000);
+  rows.push({n:'Свой рейд (слабые герои, 5k/5k/5k)',inf:a,lan:b,mar:c,total:a+b+c});
+ }else{
+  a=take('inf',cap*.1);b=take('lan',cap*.1);c=take('mar',cap*.8);
+  rows.push({n:'Свой рейд (10/10/80)',inf:a,lan:b,mar:c,total:a+b+c});
+  if(a+b+c<cap)warnings.push('Свой рейд недозаполнен: не хватает '+(cap-(a+b+c))+' войск.');
  }
+ // Отряды 1-4
+ const names=['Джесси','Джассер','Се-Юн',hasJer?'Джеронимо':'—'];
+ for(let i=0;i<4;i++){
+  const {ai,al,am}=fillJoin(jcap*.85);
+  rows.push({n:(i+1)+'. '+names[i]+' — лучники + добор',inf:ai,lan:al,mar:am,total:ai+al+am});
+  if(ai+al+am<jcap)warnings.push('Отряд '+(i+1)+' недозаполнен: не хватает '+(jcap-(ai+al+am))+' войск.');
+ }
+ // Отряд 5: только пехота и копья
  const ai5=take('inf',r.inf),al5=take('lan',r.lan);
  rows.push({n:'5. '+(hasFili?'Фили':'Резерв')+' — только пехота и копья',inf:ai5,lan:al5,mar:0,total:ai5+al5});
  const total0=inf+lan+mar,used=total0-(r.inf+r.lan+r.mar),util=total0?used/total0*100:0;
@@ -165,22 +186,24 @@ function calc(){
  html+='</table></div>';
  html+=`<h3>Остаток</h3><div class="table-scroll"><table><tr><th>Тип</th><th>Остаток</th></tr>
  <tr><td>Пехота</td><td>${fmt(r.inf)}</td></tr><tr><td>Копья</td><td>${fmt(r.lan)}</td></tr><tr><td>Лучники</td><td>${fmt(r.mar)}</td></tr></table></div>`;
+ warnings.forEach(x=>html+=`<div class="note warn">${x}</div>`);
+ if(r.inf+r.lan+r.mar>0)html+=`<div class="note">Остаток (${fmt(r.inf+r.lan+r.mar)}) не поместился в 5 отрядов — войска простаивают.</div>`;
  html+=`<p class="mut">* Веса: лучник 1.0 / копейщик 0.6 / пехотинец 0.35.</p>`;
  $('out').innerHTML=html;
 }
 function calcStart(){
  const N=+$('riders').value||0,rcap=+$('rcap').value||0,lcap=+$('lcap').value||0,
- iv=+$('interval').value||30,dur=+$('dur').value||30,cut=+$('cutoff').value||6,
+ iv=Math.max(1,+$('interval').value||30),dur=+$('dur').value||30,cut=+$('cutoff').value||6,
  jfree=+$('jmaxfree').value||130000;
- const per=rcap-lcap,pair=2*per,triple=3*per;
- const window=(dur-cut)*60;
- const waves=Math.floor(window/iv)+1;
+ const per=Math.max(0,rcap-lcap),pair=2*per,triple=3*per;
+ const window=Math.max(0,(dur-cut)*60);
+ const waves=iv>0?Math.floor(window/iv)+1:0;
  const cycle=300+15+10+10;
  const cyclesPerRaider=Math.max(1,Math.floor(window/cycle));
  const totalPair=Math.min(waves*2,N*cyclesPerRaider);
  const totalTriple=Math.min(waves*3,N*cyclesPerRaider);
- const pStd=Math.floor(pair/100000),pFree=Math.floor(pair/jfree);
- const tStd=Math.floor(triple/100000),tFree=Math.floor(triple/jfree);
+ const pStd=per>0?Math.floor(pair/100000):0,pFree=per>0?Math.floor(pair/jfree):0;
+ const tStd=per>0?Math.floor(triple/100000):0,tFree=per>0?Math.floor(triple/jfree):0;
  let html=`<div class="kpi">
  <div><b>${fmt(per)}</b><span class="mut">Мест на 1 рейд</span></div>
  <div><b>${waves}</b><span class="mut">Волн за событие</span></div>
@@ -191,12 +214,13 @@ function calcStart(){
  html+=`<div class="table-scroll"><table><tr><th>Сценарий</th><th>Мест/волну</th><th>По 100k</th><th>Без лимита (${fmt(jfree)})</th><th>Всего рейдов</th></tr>
  <tr><td>Пары</td><td>${fmt(pair)}</td><td>${pStd}</td><td>${pFree}</td><td>${fmt(totalPair)}</td></tr>
  <tr><td>Тройки</td><td>${fmt(triple)}</td><td>${tStd}</td><td>${tFree}</td><td>${fmt(totalTriple)}</td></tr></table></div>`;
- if(N>=tFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>тройки</b>: мест хватает всем, всего рейдов ${fmt(totalTriple)}.</div>`;
+ if(per<=0)html+=`<div class="note bad">Вместимость рейда должна быть больше вклада лидера.</div>`;
+ else if(N>=tFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>тройки</b>: мест хватает всем, всего рейдов ${fmt(totalTriple)}.</div>`;
  else if(N>=pFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>пары</b>: все помещаются, всего рейдов ${fmt(totalPair)}.</div>`;
  else html+=`<div class="note warn">При ${N} рейдерах мест не хватает — нужен больший интервал или меньше рейдов на волну.</div>`;
  $('outStart').innerHTML=html;
 }
-['inf','lan','mar','cap','jcap','hasJer','hasFili'].forEach(id=>{$(id).addEventListener('input',calc);$(id).addEventListener('change',calc);});
+['inf','lan','mar','cap','jcap','weakHeroes','hasJer','hasFili'].forEach(id=>{$(id).addEventListener('input',calc);$(id).addEventListener('change',calc);});
 ['riders','rcap','lcap','interval','dur','cutoff','jmaxfree'].forEach(id=>{$(id).addEventListener('input',calcStart);});
 calc();calcStart();
 </script>
