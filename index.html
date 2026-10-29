@@ -78,9 +78,10 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <li><b>Режим «слабые герои»:</b> свой рейд — 5 000 / 5 000 / 5 000 (15 000 всего), остальные войска уходят в присоединения.</li>
 <li><b>Парные запуски:</b> каждые 30 сек стартуют 2 рейда.</li>
 <li><b>Отряды вступления:</b> 1 — Джесси, 2 — Джассер, 3 — Се-Юн; Джеронимо и Фили — опционально.</li>
-<li><b>Лучники:</b> отряды 1–4 — максимум лучников (до 85% лимита), остаток до 100k добивается копьями и пехотой; отряд 5 — только пехота и копья.</li>
+<li><b>Лучники:</b> делятся <b>равномерно на все 4 отряда</b> (без перекоса, чтобы не было «10k и 0k»).</li>
+<li><b>Минимум 5 000 пехоты</b> в каждом вступительном отряде — иначе очки урона падают.</li>
+<li><b>Приоритет добора при нехватке лучников:</b> сначала копейщики, затем пехота (сверх гарантированных 5k).</li>
 <li><b>Тайминг:</b> сбор 5 мин, поход 15с, возврат 10с, путь 10с → цикл ≈ 5:35.</li>
-<li><b>Последний старт</b> — за 6 мин до конца.</li>
 </ul>
 </div>
 
@@ -129,7 +130,7 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <div id="outStart"></div>
 </div>
 
-<footer>Черновик v1.3 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
+<footer>Черновик v1.4 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -142,19 +143,6 @@ function calc(){
  let r={inf,lan,mar},rows=[],score=0,warnings=[];
  const w={inf:.35,lan:.6,mar:1};
  const take=(t,need)=>{const g=Math.max(0,Math.min(need,r[t]));r[t]-=g;score+=g*w[t];return g;};
- function fillJoin(maxMar){
-  const am=take('mar',maxMar);
-  const rest=jcap-am;
-  let ai=Math.min(r.inf,rest/2);
-  let al=Math.min(r.lan,rest-ai);
-  const deficit=rest-ai-al;
-  if(deficit>0){
-   const addI=Math.min(r.inf,deficit);ai+=addI;
-   const addL=Math.min(r.lan,deficit-addI);al+=addL;
-  }
-  r.inf-=ai;r.lan-=al;score+=ai*w.inf+al*w.lan+am*w.mar;
-  return {ai,al,am};
- }
  // Свой рейд
  let a,b,c;
  if(weak){
@@ -165,14 +153,23 @@ function calc(){
   rows.push({n:'Свой рейд (10/10/80)',inf:a,lan:b,mar:c,total:a+b+c});
   if(a+b+c<cap)warnings.push('Свой рейд недозаполнен: не хватает '+(cap-(a+b+c))+' войск.');
  }
- // Отряды 1-4
+ // Лучники делятся РАВНОМЕРНО на 4 отряда (без перекоса)
+ const marPerJoin=Math.min(r.mar/4,jcap*.85);
+ // Отряды 1-4: лучники равномерно, мин 5k пехоты, добор — сначала копья, затем пехота
  const names=['Джесси','Джассер','Се-Юн',hasJer?'Джеронимо':'—'];
  for(let i=0;i<4;i++){
-  const {ai,al,am}=fillJoin(jcap*.85);
-  rows.push({n:(i+1)+'. '+names[i]+' — лучники + добор',inf:ai,lan:al,mar:am,total:ai+al+am});
+  const am=take('mar',marPerJoin);
+  const rest=jcap-am;
+  // Гарантированные 5k пехоты
+  let ai=take('inf',Math.min(5000,rest));
+  // Копья — приоритетный добор
+  let al=take('lan',rest-ai);
+  // Пехота добирает остаток
+  ai+=take('inf',rest-ai-al);
+  rows.push({n:(i+1)+'. '+names[i]+' — лучники равномерно',inf:ai,lan:al,mar:am,total:ai+al+am});
   if(ai+al+am<jcap)warnings.push('Отряд '+(i+1)+' недозаполнен: не хватает '+(jcap-(ai+al+am))+' войск.');
  }
- // Отряд 5: только пехота и копья
+ // Отряд 5: только пехота и копья (резерв)
  const ai5=take('inf',r.inf),al5=take('lan',r.lan);
  rows.push({n:'5. '+(hasFili?'Фили':'Резерв')+' — только пехота и копья',inf:ai5,lan:al5,mar:0,total:ai5+al5});
  const total0=inf+lan+mar,used=total0-(r.inf+r.lan+r.mar),util=total0?used/total0*100:0;
