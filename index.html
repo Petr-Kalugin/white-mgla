@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Белая мгла: Выживание — Калькулятор охоты на медведя</title>
+<style>
+:root{--bg:#0b1220;--card:#121a2b;--card2:#0f1726;--line:#243149;--txt:#e8eefc;--mut:#9fb0cd;--acc:#4da3ff;--good:#38d39f;--warn:#ffb84d;--bad:#ff6b6b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{margin:0;background:linear-gradient(180deg,#0b1220,#0a0f1a);color:var(--txt);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow-x:hidden}
+.wrap{max-width:1150px;margin:0 auto;padding:16px 12px 60px}
+h1{font-size:22px;margin:.2em 0 .3em;line-height:1.25}
+h2{font-size:18px;margin:26px 0 10px;border-left:4px solid var(--acc);padding-left:10px;line-height:1.3}
+h3{font-size:16px;margin:16px 0 8px}
+p,li{color:#d7e1f5;font-size:15px}
+.mut{color:var(--mut);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+label{display:block;font-size:13px;color:var(--mut);margin-bottom:4px}
+input,select{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:12px;font-size:16px;min-height:46px}
+input:focus,select:focus{outline:2px solid #2f6fbe;border-color:var(--acc)}
+.btn{background:var(--acc);border:0;color:#04101f;font-weight:700;padding:14px 20px;border-radius:12px;cursor:pointer;font-size:16px;width:100%;min-height:50px;margin-top:12px}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;min-width:520px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#182338;color:#cfe0ff}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+.kpi div{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.kpi b{display:block;font-size:18px;color:#fff;word-break:break-word}
+.note{background:#102033;border-left:4px solid var(--warn);padding:10px 12px;border-radius:8px;margin:12px 0;font-size:14px}
+.good{color:var(--good)} .warn{color:var(--warn)}
+.chk{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px}
+.chk input{width:22px;height:22px;min-height:0}
+.chk label{margin:0;font-size:15px;color:var(--txt)}
+.tl{position:relative;margin:16px 0 0;padding-left:14px}
+.tl-item{position:relative;margin-bottom:16px;padding:12px;background:var(--card2);border:1px solid var(--line);border-radius:10px}
+.tl-item::before{content:'';position:absolute;left:-11px;top:16px;width:10px;height:10px;background:var(--acc);border-radius:50%}
+.tl-item::after{content:'';position:absolute;left:-7px;top:26px;bottom:-16px;width:2px;background:var(--line)}
+.tl-item:last-child::after{display:none}
+.tl-time{font-weight:700;color:#cfe0ff;margin-bottom:4px;display:block}
+.tl-item b{color:#fff}
+.badge{display:inline-block;background:#1b2a44;border:1px solid var(--line);color:#cfe0ff;border-radius:999px;padding:2px 8px;font-size:11px;margin-left:6px}
+.sq{display:inline-block;background:#173a2b;border:1px solid #2c6e4f;color:#9ff0c8;border-radius:6px;padding:3px 8px;font-size:12px;margin:2px 4px 2px 0}
+.arrow{color:#4da3ff;font-weight:700;margin:0 4px}
+.cycle{display:flex;gap:4px;margin:8px 0 0;flex-wrap:wrap}
+.cycle span{background:#1b2a44;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:11px}
+.cycle .m{background:#173a2b;border-color:#2c6e4f;color:#9ff0c8}
+.cycle .r{background:#3a2a17;border-color:#7a5a2c;color:#ffd9a0}
+footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding-bottom:env(safe-area-inset-bottom)}
+@media(min-width:640px){
+ .wrap{padding:24px 16px 60px}
+ h1{font-size:28px} h2{font-size:21px} h3{font-size:17px}
+ .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+ .card{padding:18px}
+ .kpi{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+ .kpi b{font-size:20px}
+ .btn{width:auto;min-height:0;padding:11px 18px}
+ table{font-size:14px;min-width:0}
+ .tl{padding-left:130px}
+ .tl-item{padding:12px 16px}
+ .tl-time{position:absolute;left:-130px;top:12px;width:110px;text-align:right;margin:0}
+ .tl-item::before{left:-16px;top:16px;width:12px;height:12px}
+ .tl-item::after{left:-11px;top:28px;bottom:-22px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🐻 Ловушка на медведя: калькулятор максимального урона</h1>
+<p class="mut">«Белая мгла: Выживание» · парные запуски · 4 основных + 1 резервный отряд вступления</p>
+
+<div class="card">
+<h2 style="margin-top:0">Допущения расчёта</h2>
+<ul>
+<li><b>Свой рейд — один</b>, 10/10/80, вместимость 140 000: 14 000 пехоты / 14 000 копий / 112 000 лучников.</li>
+<li><b>Парные запуски:</b> каждые 30 сек стартуют 2 рейда.</li>
+<li><b>Отряды вступления:</b> 1 — Джесси, 2 — Джассер, 3 — Се-Юн; Джеронимо и Фили — опционально.</li>
+<li><b>Лучники:</b> отряды 1–2 — полные 7.5/7.5/85; отряды 3–4 — остаток равномерно; отряд 5 — только пехота и копья.</li>
+<li><b>Тайминг:</b> сбор 5 мин, поход 15с, возврат 10с, путь 10с → цикл ≈ 5:35.</li>
+<li><b>Последний старт</b> — за 6 мин до конца.</li>
+</ul>
+</div>
+
+<h2>Калькулятор состава</h2>
+<div class="card">
+<div class="grid">
+<div><label>Пехота</label><input id="inf" type="number" value="277000" step="1000" inputmode="numeric"></div>
+<div><label>Копейщики</label><input id="lan" type="number" value="244000" step="1000" inputmode="numeric"></div>
+<div><label>Лучники</label><input id="mar" type="number" value="292000" step="1000" inputmode="numeric"></div>
+<div><label>Вместимость своего марша</label><input id="cap" type="number" value="140000" step="1000" inputmode="numeric"></div>
+<div><label>Лимит присоединения</label><input id="jcap" type="number" value="100000" step="1000" inputmode="numeric"></div>
+<div class="chk"><input id="hasJer" type="checkbox" checked><label for="hasJer">Есть Джеронимо</label></div>
+<div class="chk"><input id="hasFili" type="checkbox" checked><label for="hasFili">Есть Фили</label></div>
+</div>
+<button class="btn" onclick="calc()">Рассчитать состав</button>
+<div id="out"></div>
+</div>
+
+<h2>Блок-схема вступлений (пары)</h2>
+<div class="card">
+<div class="tl">
+<div class="tl-item"><div class="tl-time">30:00</div><b>Волна 1</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 1 — Джесси</span><span class="sq">Отряд 2 — Джассер</span><br><span class="mut">Вступают в оба рейда первой волны</span><div class="cycle"><span class="m">сбор 5:00</span><span class="r">поход 15с</span><span class="r">бой</span><span class="r">возврат 10с</span><span class="r">к след. 10с</span></div></div>
+<div class="tl-item"><div class="tl-time">29:30</div><b>Волна 2</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 3 — Се-Юн</span><span class="sq">Отряд 4 — Джеронимо/Фили</span><br><span class="mut">Вступают в рейды второй волны</span><div class="cycle"><span class="m">сбор 5:00</span><span class="r">поход 15с</span><span class="r">бой</span><span class="r">возврат 10с</span><span class="r">к след. 10с</span></div></div>
+<div class="tl-item"><div class="tl-time">29:00</div><b>Волна 3</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 1</span><span class="arrow">⇢</span><span class="sq">Отряд 2</span><br><span class="mut">Ещё в сборе — ждут возврата</span></div>
+<div class="tl-item"><div class="tl-time">28:30</div><b>Волна 4</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 3</span><span class="arrow">⇢</span><span class="sq">Отряд 4</span><br><span class="mut">Ещё в сборе — ждут возврата</span></div>
+<div class="tl-item"><div class="tl-time">24:25</div><b>Возврат 1 и 2</b><br><span class="sq">Отряд 1</span><span class="arrow">⇢</span><span class="sq">база</span><span class="arrow">⇢</span><span class="sq">след. рейд</span></div>
+<div class="tl-item"><div class="tl-time">23:55</div><b>Возврат 3 и 4</b><br><span class="sq">Отряд 3</span><span class="arrow">⇢</span><span class="sq">база</span><span class="arrow">⇢</span><span class="sq">след. рейд</span></div>
+<div class="tl-item"><div class="tl-time">далее</div><b>Цикл повторяется</b><br><span class="sq">1,2 ⇢ волна N</span><span class="sq">3,4 ⇢ волна N+1</span><br><span class="mut">Отряд 5 — резерв (только пехота и копья)</span></div>
+<div class="tl-item"><div class="tl-time">06:00</div><b>Последний старт</b><br><span class="mut">Дальнейшие рейды не успевают — не идут в зачёт</span></div>
+</div>
+</div>
+
+<h2>Механика старта: пары или тройки</h2>
+<div class="card">
+<div class="grid">
+<div><label>Рейдеров</label><input id="riders" type="number" value="20" min="2" inputmode="numeric"></div>
+<div><label>Вместимость рейда лидера</label><input id="rcap" type="number" value="1000000" step="50000" inputmode="numeric"></div>
+<div><label>Вклад лидера</label><input id="lcap" type="number" value="140000" step="10000" inputmode="numeric"></div>
+<div><label>Интервал волны, сек</label><input id="interval" type="number" value="30" step="5" inputmode="numeric"></div>
+<div><label>Длительность события, мин</label><input id="dur" type="number" value="30" step="1" inputmode="numeric"></div>
+<div><label>Последний старт, мин до конца</label><input id="cutoff" type="number" value="6" step="1" inputmode="numeric"></div>
+<div><label>Макс. присоединение без лимита</label><input id="jmaxfree" type="number" value="130000" step="5000" inputmode="numeric"></div>
+</div>
+<button class="btn" onclick="calcStart()">Сравнить пары и тройки</button>
+<div id="outStart"></div>
+</div>
+
+<footer>Черновик v1 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('ru-RU');
+function calc(){
+ const inf=+$('inf').value||0,lan=+$('lan').value||0,mar=+$('mar').value||0,
+ cap=+$('cap').value||0,jcap=+$('jcap').value||0,
+ hasJer=$('hasJer').checked,hasFili=$('hasFili').checked;
+ let r={inf,lan,mar},rows=[],score=0;
+ const w={inf:.35,lan:.6,mar:1};
+ const take=(t,need)=>{const g=Math.min(need,r[t]);r[t]-=g;score+=g*w[t];return g;};
+ const a=take('inf',cap*.1),b=take('lan',cap*.1),c=take('mar',cap*.8);
+ rows.push({n:'Свой рейд (10/10/80)',inf:a,lan:b,mar:c,total:a+b+c});
+ for(let i=0;i<2;i++){
+  const ai=take('inf',jcap*.075),al=take('lan',jcap*.075),am=take('mar',jcap*.85);
+  rows.push({n:(i+1)+'. '+['Джесси','Джассер'][i]+' — 7.5k/7.5k/85k',inf:ai,lan:al,mar:am,total:ai+al+am});
+ }
+ const marPer=r.mar/2;
+ for(let i=0;i<2;i++){
+  const am=take('mar',marPer);
+  const ai=take('inf',jcap*.075),al=take('lan',jcap*.075);
+  const name=i===0?'Се-Юн':(hasJer?'Джеронимо':'—');
+  rows.push({n:(i+3)+'. '+name+' — лучники равномерно',inf:ai,lan:al,mar:am,total:ai+al+am});
+ }
+ const ai5=take('inf',r.inf),al5=take('lan',r.lan);
+ rows.push({n:'5. '+(hasFili?'Фили':'Резерв')+' — только пехота и копья',inf:ai5,lan:al5,mar:0,total:ai5+al5});
+ const total0=inf+lan+mar,used=total0-(r.inf+r.lan+r.mar),util=total0?used/total0*100:0;
+ let html=`<div class="kpi">
+ <div><b>${fmt(total0)}</b><span class="mut">Всего войск</span></div>
+ <div><b>${fmt(used)}</b><span class="mut">Отправлено</span></div>
+ <div><b class="${util>99?'good':util>85?'warn':'bad'}">${util.toFixed(1)}%</b><span class="mut">Задействование</span></div>
+ <div><b>${fmt(score)}</b><span class="mut">Оценка урона*</span></div></div>`;
+ html+='<div class="table-scroll"><table><tr><th>Марш</th><th>Пехота</th><th>Копья</th><th>Лучники</th><th>Всего</th></tr>';
+ rows.forEach(x=>html+=`<tr><td>${x.n}</td><td>${fmt(x.inf)}</td><td>${fmt(x.lan)}</td><td>${fmt(x.mar)}</td><td>${fmt(x.total)}</td></tr>`);
+ html+='</table></div>';
+ html+=`<h3>Остаток</h3><div class="table-scroll"><table><tr><th>Тип</th><th>Остаток</th></tr>
+ <tr><td>Пехота</td><td>${fmt(r.inf)}</td></tr><tr><td>Копья</td><td>${fmt(r.lan)}</td></tr><tr><td>Лучники</td><td>${fmt(r.mar)}</td></tr></table></div>`;
+ html+=`<p class="mut">* Веса: лучник 1.0 / копейщик 0.6 / пехотинец 0.35.</p>`;
+ $('out').innerHTML=html;
+}
+function calcStart(){
+ const N=+$('riders').value||0,rcap=+$('rcap').value||0,lcap=+$('lcap').value||0,
+ iv=+$('interval').value||30,dur=+$('dur').value||30,cut=+$('cutoff').value||6,
+ jfree=+$('jmaxfree').value||130000;
+ const per=rcap-lcap,pair=2*per,triple=3*per;
+ const window=(dur-cut)*60;
+ const waves=Math.floor(window/iv)+1;
+ const cycle=300+15+10+10;
+ const cyclesPerRaider=Math.max(1,Math.floor(window/cycle));
+ const totalPair=Math.min(waves*2,N*cyclesPerRaider);
+ const totalTriple=Math.min(waves*3,N*cyclesPerRaider);
+ const pStd=Math.floor(pair/100000),pFree=Math.floor(pair/jfree);
+ const tStd=Math.floor(triple/100000),tFree=Math.floor(triple/jfree);
+ let html=`<div class="kpi">
+ <div><b>${fmt(per)}</b><span class="mut">Мест на 1 рейд</span></div>
+ <div><b>${waves}</b><span class="mut">Волн за событие</span></div>
+ <div><b>${fmt(pair)}</b><span class="mut">Пара: мест/волну</span></div>
+ <div><b>${fmt(triple)}</b><span class="mut">Тройка: мест/волну</span></div>
+ <div><b>${fmt(totalPair)}</b><span class="mut">Всего рейдов (пары)</span></div>
+ <div><b>${fmt(totalTriple)}</b><span class="mut">Всего рейдов (тройки)</span></div></div>`;
+ html+=`<div class="table-scroll"><table><tr><th>Сценарий</th><th>Мест/волну</th><th>По 100k</th><th>Без лимита (${fmt(jfree)})</th><th>Всего рейдов</th></tr>
+ <tr><td>Пары</td><td>${fmt(pair)}</td><td>${pStd}</td><td>${pFree}</td><td>${fmt(totalPair)}</td></tr>
+ <tr><td>Тройки</td><td>${fmt(triple)}</td><td>${tStd}</td><td>${tFree}</td><td>${fmt(totalTriple)}</td></tr></table></div>`;
+ if(N>=tFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>тройки</b>: мест хватает всем, всего рейдов ${fmt(totalTriple)}.</div>`;
+ else if(N>=pFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>пары</b>: все помещаются, всего рейдов ${fmt(totalPair)}.</div>`;
+ else html+=`<div class="note warn">При ${N} рейдерах мест не хватает — нужен больший интервал или меньше рейдов на волну.</div>`;
+ $('outStart').innerHTML=html;
+}
+['inf','lan','mar','cap','jcap','hasJer','hasFili'].forEach(id=>{$(id).addEventListener('input',calc);$(id).addEventListener('change',calc);});
+['riders','rcap','lcap','interval','dur','cutoff','jmaxfree'].forEach(id=>{$(id).addEventListener('input',calcStart);});
+calc();calcStart();
+</script>
+</body>
+</html>
