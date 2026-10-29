@@ -69,19 +69,18 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <body>
 <div class="wrap">
 <h1>🐻 Ловушка на медведя: калькулятор максимального урона</h1>
-<p class="mut">«Белая мгла: Выживание» · парные запуски · 4 основных + 1 резервный отряд вступления</p>
+<p class="mut">«Белая мгла: Выживание» · запуск всех рейдеров в первые 4 минуты · шаг 30 сек</p>
 
 <div class="card">
 <h2 style="margin-top:0">Допущения расчёта</h2>
 <ul>
-<li><b>Свой рейд — один</b>, 10/10/80, вместимость 140 000: 14 000 пехоты / 14 000 копий / 112 000 лучников.</li>
-<li><b>Режим «слабые герои»:</b> свой рейд — 5 000 / 5 000 / 5 000 (15 000 всего), остальные войска уходят в присоединения.</li>
-<li><b>Парные запуски:</b> каждые 30 сек стартуют 2 рейда.</li>
-<li><b>Отряды вступления:</b> 1 — Джесси, 2 — Джассер, 3 — Се-Юн; Джеронимо и Фили — опционально.</li>
-<li><b>Лучники:</b> делятся <b>равномерно на все 4 отряда</b> (без перекоса, чтобы не было «10k и 0k»).</li>
-<li><b>Минимум 5 000 пехоты</b> в каждом вступительном отряде — иначе очки урона падают.</li>
-<li><b>Приоритет добора при нехватке лучников:</b> сначала копейщики, затем пехота (сверх гарантированных 5k).</li>
-<li><b>Тайминг:</b> сбор 5 мин, поход 15с, возврат 10с, путь 10с → цикл ≈ 5:35.</li>
+<li><b>Все рейдеры дают старт в первые 4 минуты</b> медведя, с паузой 30 сек между волнами — максимум 9 волн.</li>
+<li><b>Свой рейд — один.</b> Формация настраивается вручную (по умолчанию 10/10/80), но <b>не менее 5 000 войск каждого типа</b>.</li>
+<li><b>Режим «слабые герои»:</b> свой рейд — 5 000 / 5 000 / 5 000, остальные войска уходят в присоединения.</li>
+<li><b>Отряды вступления — на выбор:</b> 2 (Джесси, Джассер), 3 (+Се-Юн) или 4 (+Джеронимо). Лучники делятся равномерно на выбранные отряды.</li>
+<li><b>Правила вступительного отряда:</b> минимум 5 000 пехоты и 5 000 копий; при нехватке лучников добор — сначала копья, затем пехота.</li>
+<li><b>Прогноз вместимости:</b> считается по фактическому числу рейдеров ±10% (кто-то проспал / стоит далеко).</li>
+<li><b>Последний старт</b> — за 6 мин до конца.</li>
 </ul>
 </div>
 
@@ -91,9 +90,12 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <div><label>Пехота</label><input id="inf" type="number" value="277000" step="1000" inputmode="numeric"></div>
 <div><label>Копейщики</label><input id="lan" type="number" value="244000" step="1000" inputmode="numeric"></div>
 <div><label>Лучники</label><input id="mar" type="number" value="292000" step="1000" inputmode="numeric"></div>
-<div><label>Вместимость своего марша</label><input id="cap" type="number" value="140000" step="1000" inputmode="numeric"></div>
 <div><label>Лимит присоединения</label><input id="jcap" type="number" value="100000" step="1000" inputmode="numeric"></div>
-<div class="chk"><input id="weakHeroes" type="checkbox"><label for="weakHeroes">Слабые герои — набиваю больше во вступлении (свой рейд 5k/5k/5k)</label></div>
+<div><label>Своих рейдов вступления</label><select id="jsquads"><option value="2">2 отряда (Джесси + Джассер)</option><option value="3">3 отряда (+Се-Юн)</option><option value="4" selected>4 отряда (+Джеронимо)</option></select></div>
+<div><label>Формация своего рейда: пехота %</label><input id="finf" type="number" value="10" min="0" max="100" inputmode="numeric"></div>
+<div><label>Формация своего рейда: копья %</label><input id="flan" type="number" value="10" min="0" max="100" inputmode="numeric"></div>
+<div><label>Формация своего рейда: лучники %</label><input id="fmar" type="number" value="80" min="0" max="100" inputmode="numeric"></div>
+<div class="chk"><input id="weakHeroes" type="checkbox"><label for="weakHeroes">Слабые герои — свой рейд 5k/5k/5k</label></div>
 <div class="chk"><input id="hasJer" type="checkbox" checked><label for="hasJer">Есть Джеронимо</label></div>
 <div class="chk"><input id="hasFili" type="checkbox" checked><label for="hasFili">Есть Фили</label></div>
 </div>
@@ -101,77 +103,82 @@ footer{margin-top:30px;color:var(--mut);font-size:12px;text-align:center;padding
 <div id="out"></div>
 </div>
 
-<h2>Блок-схема вступлений (пары)</h2>
+<h2>Механика старта: план волн</h2>
+<div class="card">
+<div class="grid">
+<div><label>Рейдеров всего</label><input id="riders" type="number" value="20" min="2" inputmode="numeric"></div>
+<div><label>Вместимость рейда лидера</label><input id="rcap" type="number" value="1000000" step="50000" inputmode="numeric"></div>
+<div><label>Вклад лидера</label><input id="lcap" type="number" value="140000" step="10000" inputmode="numeric"></div>
+<div><label>Окно старта, мин</label><input id="startwin" type="number" value="4" step="1" inputmode="numeric"></div>
+<div><label>Пауза между волнами, сек</label><input id="interval" type="number" value="30" step="5" inputmode="numeric"></div>
+<div><label>Макс. присоединение без лимита</label><input id="jmaxfree" type="number" value="130000" step="5000" inputmode="numeric"></div>
+</div>
+<button class="btn" onclick="calcStart()">Рассчитать план волн</button>
+<div id="outStart"></div>
+</div>
+
+<h2>Блок-схема вступлений</h2>
 <div class="card">
 <div class="tl">
-<div class="tl-item"><div class="tl-time">30:00</div><b>Волна 1</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 1 — Джесси</span><span class="sq">Отряд 2 — Джассер</span><br><span class="mut">Вступают в оба рейда первой волны</span><div class="cycle"><span class="m">сбор 5:00</span><span class="r">поход 15с</span><span class="r">бой</span><span class="r">возврат 10с</span><span class="r">к след. 10с</span></div></div>
-<div class="tl-item"><div class="tl-time">29:30</div><b>Волна 2</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 3 — Се-Юн</span><span class="sq">Отряд 4 — Джеронимо/Фили</span><br><span class="mut">Вступают в рейды второй волны</span><div class="cycle"><span class="m">сбор 5:00</span><span class="r">поход 15с</span><span class="r">бой</span><span class="r">возврат 10с</span><span class="r">к след. 10с</span></div></div>
-<div class="tl-item"><div class="tl-time">29:00</div><b>Волна 3</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 1</span><span class="arrow">⇢</span><span class="sq">Отряд 2</span><br><span class="mut">Ещё в сборе — ждут возврата</span></div>
-<div class="tl-item"><div class="tl-time">28:30</div><b>Волна 4</b><span class="badge">2 рейдера</span><br><span class="sq">Отряд 3</span><span class="arrow">⇢</span><span class="sq">Отряд 4</span><br><span class="mut">Ещё в сборе — ждут возврата</span></div>
-<div class="tl-item"><div class="tl-time">24:25</div><b>Возврат 1 и 2</b><br><span class="sq">Отряд 1</span><span class="arrow">⇢</span><span class="sq">база</span><span class="arrow">⇢</span><span class="sq">след. рейд</span></div>
-<div class="tl-item"><div class="tl-time">23:55</div><b>Возврат 3 и 4</b><br><span class="sq">Отряд 3</span><span class="arrow">⇢</span><span class="sq">база</span><span class="arrow">⇢</span><span class="sq">след. рейд</span></div>
-<div class="tl-item"><div class="tl-time">далее</div><b>Цикл повторяется</b><br><span class="sq">1,2 ⇢ волна N</span><span class="sq">3,4 ⇢ волна N+1</span><br><span class="mut">Отряд 5 — резерв (только пехота и копья)</span></div>
+<div class="tl-item"><div class="tl-time">04:00</div><b>Волна 1</b><span class="badge">рейдеры по плану</span><br><span class="sq">Отряд 1 — Джесси</span><span class="sq">Отряд 2 — Джассер</span><div class="cycle"><span class="m">сбор 5:00</span><span class="r">поход 15с</span><span class="r">бой</span><span class="r">возврат 10с</span><span class="r">к след. 10с</span></div></div>
+<div class="tl-item"><div class="tl-time">03:30</div><b>Волна 2</b><br><span class="sq">Отряд 3 — Се-Юн</span><span class="sq">Отряд 4 — Джеронимо</span></div>
+<div class="tl-item"><div class="tl-time">03:00</div><b>Волна 3</b><br><span class="sq">Отряд 1</span><span class="arrow">⇢</span><span class="sq">Отряд 2</span><br><span class="mut">Ещё в сборе — ждут возврата</span></div>
+<div class="tl-item"><div class="tl-time">далее</div><b>Цикл повторяется</b><br><span class="sq">1,2 ⇢ волна N</span><span class="sq">3,4 ⇢ волна N+1</span><br><span class="mut">Отряд 5 — резерв (пехота + копья)</span></div>
 <div class="tl-item"><div class="tl-time">06:00</div><b>Последний старт</b><br><span class="mut">Дальнейшие рейды не успевают — не идут в зачёт</span></div>
 </div>
 </div>
 
-<h2>Механика старта: пары или тройки</h2>
-<div class="card">
-<div class="grid">
-<div><label>Рейдеров</label><input id="riders" type="number" value="20" min="2" inputmode="numeric"></div>
-<div><label>Вместимость рейда лидера</label><input id="rcap" type="number" value="1000000" step="50000" inputmode="numeric"></div>
-<div><label>Вклад лидера</label><input id="lcap" type="number" value="140000" step="10000" inputmode="numeric"></div>
-<div><label>Интервал волны, сек</label><input id="interval" type="number" value="30" step="5" inputmode="numeric"></div>
-<div><label>Длительность события, мин</label><input id="dur" type="number" value="30" step="1" inputmode="numeric"></div>
-<div><label>Последний старт, мин до конца</label><input id="cutoff" type="number" value="6" step="1" inputmode="numeric"></div>
-<div><label>Макс. присоединение без лимита</label><input id="jmaxfree" type="number" value="130000" step="5000" inputmode="numeric"></div>
-</div>
-<button class="btn" onclick="calcStart()">Сравнить пары и тройки</button>
-<div id="outStart"></div>
-</div>
-
-<footer>Черновик v1.4 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
+<footer>Черновик v1.5 · мобильная версия. Тайминги и веса — усреднённые; сверяйте с фактическими очками в игре.</footer>
 </div>
 <script>
 const $=id=>document.getElementById(id);
 const fmt=n=>Math.round(n).toLocaleString('ru-RU');
 function calc(){
  const inf=+$('inf').value||0,lan=+$('lan').value||0,mar=+$('mar').value||0,
- cap=+$('cap').value||0,jcap=+$('jcap').value||0,
+ jcap=+$('jcap').value||0,nq=+$('jsquads').value||4,
  weak=$('weakHeroes').checked,
+ fi=+$('finf').value||0,fl=+$('flan').value||0,fm=+$('fmar').value||0,
  hasJer=$('hasJer').checked,hasFili=$('hasFili').checked;
  let r={inf,lan,mar},rows=[],score=0,warnings=[];
  const w={inf:.35,lan:.6,mar:1};
  const take=(t,need)=>{const g=Math.max(0,Math.min(need,r[t]));r[t]-=g;score+=g*w[t];return g;};
+ function fillJoin(shareMar){
+  const am=take('mar',shareMar);
+  const rest=jcap-am;
+  let ai=take('inf',Math.min(5000,rest));
+  let al=take('lan',Math.min(5000,rest-ai));
+  al+=take('lan',rest-ai-al);
+  ai+=take('inf',rest-ai-al);
+  return {ai,al,am};
+ }
  // Свой рейд
  let a,b,c;
  if(weak){
   a=take('inf',5000);b=take('lan',5000);c=take('mar',5000);
   rows.push({n:'Свой рейд (слабые герои, 5k/5k/5k)',inf:a,lan:b,mar:c,total:a+b+c});
  }else{
-  a=take('inf',cap*.1);b=take('lan',cap*.1);c=take('mar',cap*.8);
-  rows.push({n:'Свой рейд (10/10/80)',inf:a,lan:b,mar:c,total:a+b+c});
-  if(a+b+c<cap)warnings.push('Свой рейд недозаполнен: не хватает '+(cap-(a+b+c))+' войск.');
+  const sum=fi+fl+fm;
+  if(sum!==100)warnings.push('Проценты формации своего рейда в сумме дают '+sum+'% — должно быть 100%.');
+  const cap=cap_=+document.getElementById('cap').value||140000;
+  a=take('inf',cap*fi/100);b=take('lan',cap*fl/100);c=take('mar',cap*fm/100);
+  rows.push({n:'Свой рейд ('+fi+'/'+fl+'/'+fm+')',inf:a,lan:b,mar:c,total:a+b+c});
+  if(a<5000)warnings.push('В своём рейде меньше 5 000 пехоты — очки урона падают.');
+  if(b<5000)warnings.push('В своём рейде меньше 5 000 копий — очки урона падают.');
+  if(c<5000)warnings.push('В своём рейде меньше 5 000 лучников — очки урона падают.');
  }
- // Лучники делятся РАВНОМЕРНО на 4 отряда (без перекоса)
- const marPerJoin=Math.min(r.mar/4,jcap*.85);
- // Отряды 1-4: лучники равномерно, мин 5k пехоты, добор — сначала копья, затем пехота
- const names=['Джесси','Джассер','Се-Юн',hasJer?'Джеронимо':'—'];
- for(let i=0;i<4;i++){
-  const am=take('mar',marPerJoin);
-  const rest=jcap-am;
-  // Гарантированные 5k пехоты
-  let ai=take('inf',Math.min(5000,rest));
-  // Копья — приоритетный добор
-  let al=take('lan',rest-ai);
-  // Пехота добирает остаток
-  ai+=take('inf',rest-ai-al);
+ // Отряды вступления
+ const names=['Джесси','Джассер','Се-Юн','Джеронимо'].slice(0,nq);
+ const marPerJoin=Math.min(r.mar/nq,jcap*.85);
+ for(let i=0;i<nq;i++){
+  const {ai,al,am}=fillJoin(marPerJoin);
   rows.push({n:(i+1)+'. '+names[i]+' — лучники равномерно',inf:ai,lan:al,mar:am,total:ai+al+am});
+  if(ai<5000)warnings.push('Отряд '+(i+1)+': меньше 5 000 пехоты.');
+  if(al<5000)warnings.push('Отряд '+(i+1)+': меньше 5 000 копий.');
   if(ai+al+am<jcap)warnings.push('Отряд '+(i+1)+' недозаполнен: не хватает '+(jcap-(ai+al+am))+' войск.');
  }
- // Отряд 5: только пехота и копья (резерв)
- const ai5=take('inf',r.inf),al5=take('lan',r.lan);
- rows.push({n:'5. '+(hasFili?'Фили':'Резерв')+' — только пехота и копья',inf:ai5,lan:al5,mar:0,total:ai5+al5});
+ // Резервный отряд — остаток
+ const ai5=take('inf',r.inf),al5=take('lan',r.lan),am5=take('mar',r.mar);
+ rows.push({n:(nq+1)+'. '+(hasFili?'Фили':'Резерв')+' — остаток',inf:ai5,lan:al5,mar:am5,total:ai5+al5+am5});
  const total0=inf+lan+mar,used=total0-(r.inf+r.lan+r.mar),util=total0?used/total0*100:0;
  let html=`<div class="kpi">
  <div><b>${fmt(total0)}</b><span class="mut">Всего войск</span></div>
@@ -184,41 +191,43 @@ function calc(){
  html+=`<h3>Остаток</h3><div class="table-scroll"><table><tr><th>Тип</th><th>Остаток</th></tr>
  <tr><td>Пехота</td><td>${fmt(r.inf)}</td></tr><tr><td>Копья</td><td>${fmt(r.lan)}</td></tr><tr><td>Лучники</td><td>${fmt(r.mar)}</td></tr></table></div>`;
  warnings.forEach(x=>html+=`<div class="note warn">${x}</div>`);
- if(r.inf+r.lan+r.mar>0)html+=`<div class="note">Остаток (${fmt(r.inf+r.lan+r.mar)}) не поместился в 5 отрядов — войска простаивают.</div>`;
  html+=`<p class="mut">* Веса: лучник 1.0 / копейщик 0.6 / пехотинец 0.35.</p>`;
  $('out').innerHTML=html;
 }
 function calcStart(){
  const N=+$('riders').value||0,rcap=+$('rcap').value||0,lcap=+$('lcap').value||0,
- iv=Math.max(1,+$('interval').value||30),dur=+$('dur').value||30,cut=+$('cutoff').value||6,
+ win=+$('startwin').value||4,iv=Math.max(1,+$('interval').value||30),
  jfree=+$('jmaxfree').value||130000;
- const per=Math.max(0,rcap-lcap),pair=2*per,triple=3*per;
- const window=Math.max(0,(dur-cut)*60);
- const waves=iv>0?Math.floor(window/iv)+1:0;
- const cycle=300+15+10+10;
- const cyclesPerRaider=Math.max(1,Math.floor(window/cycle));
- const totalPair=Math.min(waves*2,N*cyclesPerRaider);
- const totalTriple=Math.min(waves*3,N*cyclesPerRaider);
- const pStd=per>0?Math.floor(pair/100000):0,pFree=per>0?Math.floor(pair/jfree):0;
- const tStd=per>0?Math.floor(triple/100000):0,tFree=per>0?Math.floor(triple/jfree):0;
+ const per=Math.max(0,rcap-lcap);
+ const maxWaves=Math.floor(win*60/iv)+1;
+ const perWave=Math.ceil(N/maxWaves);
+ const wavesUsed=Math.ceil(N/perWave);
  let html=`<div class="kpi">
- <div><b>${fmt(per)}</b><span class="mut">Мест на 1 рейд</span></div>
- <div><b>${waves}</b><span class="mut">Волн за событие</span></div>
- <div><b>${fmt(pair)}</b><span class="mut">Пара: мест/волну</span></div>
- <div><b>${fmt(triple)}</b><span class="mut">Тройка: мест/волну</span></div>
- <div><b>${fmt(totalPair)}</b><span class="mut">Всего рейдов (пары)</span></div>
- <div><b>${fmt(totalTriple)}</b><span class="mut">Всего рейдов (тройки)</span></div></div>`;
- html+=`<div class="table-scroll"><table><tr><th>Сценарий</th><th>Мест/волну</th><th>По 100k</th><th>Без лимита (${fmt(jfree)})</th><th>Всего рейдов</th></tr>
- <tr><td>Пары</td><td>${fmt(pair)}</td><td>${pStd}</td><td>${pFree}</td><td>${fmt(totalPair)}</td></tr>
- <tr><td>Тройки</td><td>${fmt(triple)}</td><td>${tStd}</td><td>${tFree}</td><td>${fmt(totalTriple)}</td></tr></table></div>`;
- if(per<=0)html+=`<div class="note bad">Вместимость рейда должна быть больше вклада лидера.</div>`;
- else if(N>=tFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>тройки</b>: мест хватает всем, всего рейдов ${fmt(totalTriple)}.</div>`;
- else if(N>=pFree*2)html+=`<div class="note good">При ${N} рейдерах — <b>пары</b>: все помещаются, всего рейдов ${fmt(totalPair)}.</div>`;
- else html+=`<div class="note warn">При ${N} рейдерах мест не хватает — нужен больший интервал или меньше рейдов на волну.</div>`;
+ <div><b>${maxWaves}</b><span class="mut">Макс. волн за ${win} мин</span></div>
+ <div><b>${perWave}</b><span class="mut">Рейдеров на волну (рекомендация)</span></div>
+ <div><b>${wavesUsed}</b><span class="mut">Волн понадобится</span></div>
+ <div><b>${fmt(per)}</b><span class="mut">Мест на 1 рейд</span></div></div>`;
+ html+=`<h3>Прогноз по волнам (±10% на опоздавших)</h3>`;
+ html+=`<div class="table-scroll"><table><tr><th>Волна</th><th>Время</th><th>Рейдеров</th><th>Мест (план)</th><th>Мест −10%</th><th>Мест +10%</th><th>Игроков по 100k</th><th>Без лимита (${fmt(jfree)})</th></tr>`;
+ for(let i=0;i<wavesUsed;i++){
+  const t=i*iv,riders=perWave;
+  const cap=riders*per;
+  const lo=Math.floor(cap*0.9),hi=Math.ceil(cap*1.1);
+  html+=`<tr><td>${i+1}</td><td>${fmt(t)} сек</td><td>${riders}</td><td>${fmt(cap)}</td><td>${fmt(lo)}</td><td>${fmt(hi)}</td><td>${Math.floor(cap/100000)}</td><td>${Math.floor(cap/jfree)}</td></tr>`;
+ }
+ html+='</table></div>';
+ html+=`<div class="note good">Рекомендация: запускать по <b>${perWave}</b> рейдеров на волну каждые ${iv} сек — все ${N} рейдеров уложатся в первые ${win} мин (${wavesUsed} волн). Прогноз учитывает ±10% на опоздавших/далёких.</div>`;
  $('outStart').innerHTML=html;
 }
-['inf','lan','mar','cap','jcap','weakHeroes','hasJer','hasFili'].forEach(id=>{$(id).addEventListener('input',calc);$(id).addEventListener('change',calc);});
-['riders','rcap','lcap','interval','dur','cutoff','jmaxfree'].forEach(id=>{$(id).addEventListener('input',calcStart);});
+['inf','lan','mar','jcap','jsquads','finf','flan','fmar','weakHeroes','hasJer','hasFili','cap'].forEach(id=>{$(id).addEventListener('input',calc);$(id).addEventListener('change',calc);});
+['riders','rcap','lcap','startwin','interval','jmaxfree'].forEach(id=>{$(id).addEventListener('input',calcStart);});
+// Добавляем поле вместимости своего марша, если его нет
+if(!document.getElementById('cap')){
+ const d=document.createElement('div');
+ d.innerHTML='<label>Вместимость своего марша</label><input id="cap" type="number" value="140000" step="1000" inputmode="numeric">';
+ document.querySelector('#inf').closest('.grid').appendChild(d.firstChild);
+ document.getElementById('cap').addEventListener('input',calc);
+}
 calc();calcStart();
 </script>
 </body>
